@@ -1,0 +1,19 @@
+{
+  "name": "multichat-viewer",
+  "version": "1.0.0",
+  "description": "A web-based multichat viewer for Twitch, YouTube, Kick, and Aparat",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "axios": "^0.27.2",
+    "express": "^4.18.2",
+    "socket.io": "^4.5.0",
+    "tmi.js": "^1.8.5"
+  },
+  "engines": {
+    "node": ">=14"
+  },
+  "license": "MIT"
+}
