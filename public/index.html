@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Multichat Viewer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #181818;
+      color: #ffffff;
+      margin: 0;
+      padding: 0;
+    }
+    .header {
+      padding: 10px;
+      background-color: #282828;
+      text-align: center;
+      font-size: 1.2em;
+    }
+    .chat-container {
+      padding: 10px;
+      height: calc(100vh - 200px);
+      overflow-y: auto;
+    }
+    .chat-message {
+      margin-bottom: 10px;
+      border-bottom: 1px solid #444;
+      padding-bottom: 5px;
+    }
+    .platform {
+      font-weight: bold;
+      margin-right: 5px;
+    }
+    .timestamp {
+      font-size: 0.8em;
+      color: #aaa;
+      margin-right: 5px;
+    }
+    .username {
+      font-weight: bold;
+      margin-right: 5px;
+    }
+    button {
+      margin: 5px;
+      padding: 5px 10px;
+      font-size: 0.9em;
+    }
+    .config-form {
+      padding: 10px;
+      background-color: #282828;
+    }
+    .config-form input {
+      margin: 5px 0;
+      padding: 5px;
+      width: 90%;
+    }
+    .config-form label {
+      display: block;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    Multichat Viewer
+    <button id="toggleDarkMode">Toggle Dark Mode</button>
+  </div>
+  
+  <div class="config-form">
+    <h3>Configure Your Chat Channels</h3>
+    <form id="configForm">
+      <label for="twitchInput">Twitch Channel:</label>
+      <input type="text" id="twitchInput" name="twitch" placeholder="Enter Twitch channel name" />
+      
+      <label for="youtubeInput">YouTube Live Chat ID:</label>
+      <input type="text" id="youtubeInput" name="youtube" placeholder="Enter YouTube Live Chat ID" />
+      
+      <label for="kickInput">Kick Username:</label>
+      <input type="text" id="kickInput" name="kick" placeholder="Enter Kick username" />
+      
+      <label for="aparatInput">Aparat Username:</label>
+      <input type="text" id="aparatInput" name="aparat" placeholder="Enter Aparat username" />
+      
+      <button type="submit">Save Configuration</button>
+    </form>
+  </div>
+
+  <div class="chat-container" id="chatContainer"></div>
+  
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const chatContainer = document.getElementById('chatContainer');
+    const toggleDarkModeBtn = document.getElementById('toggleDarkMode');
+    const configForm = document.getElementById('configForm');
+
+    // Toggle dark mode by toggling a class on the body
+    toggleDarkModeBtn.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+    });
+
+    // Load saved configuration from localStorage if available
+    const savedConfig = localStorage.getItem('chatConfig');
+    if (savedConfig) {
+      const config = JSON.parse(savedConfig);
+      document.getElementById('twitchInput').value = config.twitch || '';
+      document.getElementById('youtubeInput').value = config.youtube || '';
+      document.getElementById('kickInput').value = config.kick || '';
+      document.getElementById('aparatInput').value = config.aparat || '';
+      socket.emit('updateConfig', config);
+    }
+
+    // Handle configuration form submission
+    configForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const config = {
+        twitch: document.getElementById('twitchInput').value.trim(),
+        youtube: document.getElementById('youtubeInput').value.trim(),
+        kick: document.getElementById('kickInput').value.trim(),
+        aparat: document.getElementById('aparatInput').value.trim()
+      };
+      localStorage.setItem('chatConfig', JSON.stringify(config));
+      socket.emit('updateConfig', config);
+    });
+
+    // Listen for incoming chat messages and display them
+    socket.on('chatMessage', (msg) => {
+      const messageEl = document.createElement('div');
+      messageEl.classList.add('chat-message');
+
+      const timestampEl = document.createElement('span');
+      timestampEl.classList.add('timestamp');
+      timestampEl.textContent = `[${new Date(msg.timestamp).toLocaleTimeString()}]`;
+
+      const platformEl = document.createElement('span');
+      platformEl.classList.add('platform');
+      platformEl.textContent = `[${msg.platform}]`;
+
+      const usernameEl = document.createElement('span');
+      usernameEl.classList.add('username');
+      usernameEl.textContent = msg.username + ':';
+
+      const textEl = document.createElement('span');
+      textEl.classList.add('message');
+      textEl.textContent = ' ' + msg.message;
+
+      messageEl.appendChild(timestampEl);
+      messageEl.appendChild(platformEl);
+      messageEl.appendChild(usernameEl);
+      messageEl.appendChild(textEl);
+      
+      chatContainer.appendChild(messageEl);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    });
+  </script>
+</body>
+</html>
